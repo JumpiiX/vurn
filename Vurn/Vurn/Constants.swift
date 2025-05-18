@@ -1,10 +1,3 @@
-//
-//  Constants.swift
-//  Vurn
-//
-//  Created by David Unterguggenberger on 30.04.2025.
-//
-
 import SwiftUI
 
 // App-wide color constants based on the logo

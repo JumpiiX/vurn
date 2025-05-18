@@ -1,9 +1,3 @@
-//
-//  NewsView.swift
-//  Vurn
-//
-//  Created by David Unterguggenberger on 30.04.2025.
-//
 import SwiftUI
 
 struct NewsView: View {
@@ -108,19 +102,7 @@ struct NewsView: View {
             }
             .navigationTitle("Fitness News")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(AppColors.darkGreen, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        // Refresh action
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundColor(AppColors.lightGreen)
-                    }
-                }
-            }
+            .navigationBarHidden(true)
         }
     }
 }
@@ -283,6 +265,8 @@ struct NewsCard: View {
     }
 }
 
-#Preview {
-    NewsView()
+struct NewsView_Previews: PreviewProvider {
+    static var previews: some View {
+        NewsView()
+    }
 }

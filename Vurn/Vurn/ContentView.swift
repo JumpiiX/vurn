@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab = 0
+    @State private var username = "David" // Replace with actual user data
+    @State private var vurnCoins = 580 // Replace with actual user data
     
     var body: some View {
         ZStack {
@@ -9,94 +11,115 @@ struct ContentView: View {
             AppColors.background
                 .ignoresSafeArea()
             
-            // Tab view with all the tabs
-            TabView(selection: $selectedTab) {
-                // Home Tab
-                HomeView()
-                    .tabItem {
-                        Label("Home", systemImage: "house.fill")
-                    }
-                    .tag(0)
+            VStack(spacing: 0) {
+                // Header with username and Vurn coins
+                HeaderView(username: username, vurnCoins: vurnCoins)
                 
-                // Streak Tab
-                StreakView()
-                    .tabItem {
-                        Label("Streak", systemImage: "flame.fill")
-                    }
-                    .tag(1)
-                
-                // News Tab
-                NewsView()
-                    .tabItem {
-                        Label("News", systemImage: "newspaper.fill")
-                    }
-                    .tag(2)
-                
-                // Messages Tab
-                MessagesView()
-                    .tabItem {
-                        Label("Messages", systemImage: "message.fill")
-                    }
-                    .tag(3)
-                
-                // Map Tab
-                MapView()
-                    .tabItem {
-                        Label("Map", systemImage: "map.fill")
-                    }
-                    .tag(4)
-            }
-            .accentColor(AppColors.accentYellow) // Sets the selected tab color
-            .onAppear {
-                // Customize tab bar appearance
-                let appearance = UITabBarAppearance()
-                appearance.backgroundColor = UIColor(AppColors.darkGreen)
-                
-                // Set unselected item color
-                appearance.stackedLayoutAppearance.normal.iconColor = UIColor(AppColors.lightGreen.opacity(0.7))
-                appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
-                    NSAttributedString.Key.foregroundColor: UIColor(AppColors.lightGreen.opacity(0.7))
-                ]
-                
-                // Set selected item color
-                appearance.stackedLayoutAppearance.selected.iconColor = UIColor(AppColors.accentYellow)
-                appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
-                    NSAttributedString.Key.foregroundColor: UIColor(AppColors.accentYellow)
-                ]
-                
-                // Apply the appearance
-                UITabBar.appearance().standardAppearance = appearance
-                UITabBar.appearance().scrollEdgeAppearance = appearance
+                // Tab view with all the tabs
+                TabView(selection: $selectedTab) {
+                    // Home Tab
+                    HomeView()
+                        .tabItem {
+                            Label("Home", systemImage: "house.fill")
+                        }
+                        .tag(0)
+                    
+                    // Rewards Tab
+                    RewardsView()
+                        .tabItem {
+                            Label("Rewards", systemImage: "gift.fill")
+                        }
+                        .tag(1)
+                    
+                    // News Tab
+                    NewsView()
+                        .tabItem {
+                            Label("News", systemImage: "newspaper.fill")
+                        }
+                        .tag(2)
+                    
+                    // Map Tab
+                    MapView()
+                        .tabItem {
+                            Label("Map", systemImage: "map.fill")
+                        }
+                        .tag(3)
+                }
+                .accentColor(AppColors.accentYellow) // Sets the selected tab color
+                .onAppear {
+                    // Customize tab bar appearance
+                    let appearance = UITabBarAppearance()
+                    appearance.backgroundColor = UIColor(AppColors.darkGreen)
+                    
+                    // Set unselected item color
+                    appearance.stackedLayoutAppearance.normal.iconColor = UIColor(AppColors.lightGreen.opacity(0.7))
+                    appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+                        NSAttributedString.Key.foregroundColor: UIColor(AppColors.lightGreen.opacity(0.7))
+                    ]
+                    
+                    // Set selected item color
+                    appearance.stackedLayoutAppearance.selected.iconColor = UIColor(AppColors.accentYellow)
+                    appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+                        NSAttributedString.Key.foregroundColor: UIColor(AppColors.accentYellow)
+                    ]
+                    
+                    // Apply the appearance
+                    UITabBar.appearance().standardAppearance = appearance
+                    UITabBar.appearance().scrollEdgeAppearance = appearance
+                }
             }
         }
     }
 }
 
-// Logo view that can be reused throughout the app
-struct LogoView: View {
-    var size: CGFloat = 30
+// Custom header view with username and Vurn coins
+struct HeaderView: View {
+    let username: String
+    let vurnCoins: Int
     
     var body: some View {
-        HStack(spacing: 8) {
-            // Create a simple flame+checkmark logo
-            ZStack {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: size))
-                    .foregroundColor(AppColors.lightGreen)
-                
-                Image(systemName: "checkmark")
-                    .font(.system(size: size * 0.7))
-                    .offset(x: size * 0.2, y: size * 0.1)
-                    .foregroundColor(AppColors.accentYellow)
-            }
-            
-            Text("VURN")
-                .font(.system(size: size, weight: .bold))
+        HStack {
+            // Username
+            Text("Hi, \(username)")
+                .font(.title2)
+                .fontWeight(.bold)
                 .foregroundColor(AppColors.lightGreen)
+            
+            Spacer()
+            
+            // Vurn Coins with custom icon
+            HStack(spacing: 8) {
+                Text("\(vurnCoins)")
+                    .font(.headline)
+                    .foregroundColor(AppColors.accentYellow)
+                
+                // Custom Vurn coin icon
+                ZStack {
+                    Circle()
+                        .fill(AppColors.accentYellow)
+                        .frame(width: 28, height: 28)
+                    
+                    Text("V")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(AppColors.darkGreen)
+                }
+            }
+            .padding(8)
+            .background(AppColors.darkGreen.opacity(0.5))
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(AppColors.accentYellow.opacity(0.5), lineWidth: 1)
+            )
         }
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+        .background(AppColors.darkGreen)
     }
 }
 
-#Preview {
-    ContentView()
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }
