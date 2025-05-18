@@ -1,22 +1,14 @@
 import SwiftUI
 import MapKit
 
-// Ein einfacheres MapView ohne automatische Aktualisierungen
+// A map view that uses the user's actual GPS location
 struct MapView: View {
-    // Verwende StateObject für den LocationManager
+    // Use StateObject for the LocationManager
     @StateObject private var locationManager = LocationManager()
-    
-    // Eigene Region-State, NICHT aus dem LocationManager
-    @State private var mapRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    )
     
     @State private var selectedGym: GymLocation?
     @State private var showingDetail = false
     @State private var searchText = ""
-    
-    // Wir verwenden hier keinen isTrackingUser Boolean mehr
     
     var filteredGyms: [GymLocation] {
         if searchText.isEmpty {
@@ -31,9 +23,9 @@ struct MapView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // WICHTIG: Wir verwenden unsere eigene mapRegion, NICHT die Region des LocationManagers
+                // Use locationManager.region directly instead of separate mapRegion
                 Map(
-                    coordinateRegion: $mapRegion,
+                    coordinateRegion: $locationManager.region,
                     interactionModes: .all,
                     showsUserLocation: true,
                     annotationItems: filteredGyms
@@ -107,7 +99,7 @@ struct MapView: View {
                         
                         Spacer()
                         
-                        // Standort-Button - WICHTIG: Dieser setzt die mapRegion nur einmalig
+                        // Standort-Button - Updates the locationManager region
                         Button(action: {
                             centerMapOnUser()
                         }) {
@@ -160,50 +152,34 @@ struct MapView: View {
                 }
             }
             .onAppear {
-                // Beim ersten Erscheinen der View
-                setupInitialLocation()
+                // Start location updates when view appears
+                if locationManager.authorizationStatus == .authorizedWhenInUse ||
+                   locationManager.authorizationStatus == .authorizedAlways {
+                    locationManager.startLocationUpdates()
+                }
+                
+                // Search for gyms if none are found
+                if locationManager.gyms.isEmpty {
+                    locationManager.searchNearbyGyms()
+                }
             }
         }
     }
     
     // MARK: - Helper-Methoden
     
-    // Initialisiert die Karte beim ersten Laden
-    private func setupInitialLocation() {
-        // Starte die Standortverfolgung
-        if locationManager.authorizationStatus == .authorizedWhenInUse ||
-           locationManager.authorizationStatus == .authorizedAlways {
-            locationManager.startLocationUpdates()
-        }
-        
-        // Setze die Kartenmitte auf den Benutzerstandort, wenn verfügbar
-        if let userLocation = locationManager.userLocation {
-            // Wir setzen die mapRegion einmalig
-            mapRegion = MKCoordinateRegion(
-                center: userLocation.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-            )
-        }
-        
-        // Suche nach Gyms, wenn noch keine gefunden wurden
-        if locationManager.gyms.isEmpty {
-            locationManager.searchNearbyGyms()
-        }
-    }
-    
-    // Zentriert die Karte auf den Benutzer, ohne das kontinuierliche Tracking zu aktivieren
+    // Centers the map on the user's current location
     private func centerMapOnUser() {
         if let userLocation = locationManager.userLocation {
-            // Wir setzen die mapRegion einmalig, ohne kontinuierliches Tracking
-            mapRegion = MKCoordinateRegion(
+            locationManager.region = MKCoordinateRegion(
                 center: userLocation.coordinate,
-                span: mapRegion.span // Behalte den aktuellen Zoom-Level bei
+                span: locationManager.region.span // Keep current zoom level
             )
         }
     }
 }
 
-// Unterstützende Views bleiben unverändert
+// Supporting Views
 struct GymMapMarker: View {
     let gym: GymLocation
     let isSelected: Bool
@@ -331,7 +307,7 @@ struct GymDetailCard: View {
         .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
     }
     
-    // Funktion zum Öffnen der Maps-App mit Wegbeschreibung
+    // Function to open the Maps app with directions
     private func openMapsWithDirections(to gym: GymLocation) {
         let placemark = MKPlacemark(coordinate: gym.coordinate)
         let mapItem = MKMapItem(placemark: placemark)
@@ -348,7 +324,7 @@ struct LocationPermissionView: View {
     
     var body: some View {
         ZStack {
-            // Halbtransparenter Hintergrund
+            // Semi-transparent background
             Color.black.opacity(0.7)
                 .ignoresSafeArea()
             
@@ -370,7 +346,7 @@ struct LocationPermissionView: View {
                 
                 if status == .denied {
                     Button(action: {
-                        // Einstellungen-App öffnen
+                        // Open Settings app
                         if let url = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(url)
                         }
@@ -410,7 +386,7 @@ struct LocationPermissionView: View {
     }
 }
 
-// Um die View in der Vorschau anzuzeigen
+// Preview provider
 struct MapView_Previews: PreviewProvider {
     static var previews: some View {
         MapView()
