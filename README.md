@@ -25,3 +25,6 @@ Currently in early development. Target release: 2025.
 1. Clone the repository
 2. Open Vurn.xcodeproj in Xcode
 3. Build and run on iOS simulator or device
+=======
+# vurn
+A fitness tracking app that automatically detects gym visits and helps users maintain workout streaks.
