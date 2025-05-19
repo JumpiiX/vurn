@@ -1,9 +1,7 @@
 import SwiftUI
 import MapKit
 
-// A map view that uses the user's actual GPS location
 struct MapView: View {
-    // Use StateObject for the LocationManager
     @StateObject private var locationManager = LocationManager()
     
     @State private var selectedGym: GymLocation?
@@ -23,7 +21,7 @@ struct MapView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Use locationManager.region directly instead of separate mapRegion
+                // Using standard Map that works on all iOS versions
                 Map(
                     coordinateRegion: $locationManager.region,
                     interactionModes: .all,
@@ -31,7 +29,7 @@ struct MapView: View {
                     annotationItems: filteredGyms
                 ) { gym in
                     MapAnnotation(coordinate: gym.coordinate) {
-                        GymMapMarker(gym: gym, isSelected: selectedGym?.id == gym.id)
+                        GymMarkerView(gym: gym, isSelected: selectedGym?.id == gym.id)
                             .onTapGesture {
                                 selectedGym = gym
                                 showingDetail = true
@@ -40,9 +38,9 @@ struct MapView: View {
                 }
                 .ignoresSafeArea(edges: .top)
                 
-                // UI-Elemente
+                // UI Elements
                 VStack {
-                    // Suchleiste
+                    // Search bar
                     HStack {
                         TextField("Search for gyms", text: $searchText)
                             .padding(10)
@@ -65,7 +63,7 @@ struct MapView: View {
                     }
                     .padding(.top, 60)
                     
-                    // Status-Anzeigen
+                    // Status indicators
                     if locationManager.isSearching {
                         Text("Searching for gyms...")
                             .padding(8)
@@ -82,9 +80,9 @@ struct MapView: View {
                     
                     Spacer()
                     
-                    // Steuerelemente am unteren Rand
+                    // Bottom controls
                     HStack {
-                        // Aktualisieren-Button
+                        // Refresh button
                         Button(action: {
                             locationManager.searchNearbyGyms()
                         }) {
@@ -99,7 +97,7 @@ struct MapView: View {
                         
                         Spacer()
                         
-                        // Standort-Button - Updates the locationManager region
+                        // Center on user button
                         Button(action: {
                             centerMapOnUser()
                         }) {
@@ -116,7 +114,7 @@ struct MapView: View {
                     .padding(.bottom, 30)
                 }
                 
-                // Gym-Detailkarte
+                // Gym detail card
                 if showingDetail, let gym = selectedGym {
                     VStack {
                         Spacer()
@@ -129,7 +127,7 @@ struct MapView: View {
                     .animation(.spring(), value: showingDetail)
                 }
                 
-                // Berechtigungsanzeige
+                // Location permission view
                 if locationManager.authorizationStatus == .notDetermined ||
                    locationManager.authorizationStatus == .restricted ||
                    locationManager.authorizationStatus == .denied {
@@ -144,7 +142,7 @@ struct MapView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        // Filter-Aktion
+                        // Filter action
                     }) {
                         Image(systemName: "slider.horizontal.3")
                             .foregroundColor(AppColors.lightGreen)
@@ -152,13 +150,13 @@ struct MapView: View {
                 }
             }
             .onAppear {
-                // Start location updates when view appears
+                // Start location updates
                 if locationManager.authorizationStatus == .authorizedWhenInUse ||
                    locationManager.authorizationStatus == .authorizedAlways {
                     locationManager.startLocationUpdates()
                 }
                 
-                // Search for gyms if none are found
+                // Search for gyms if none found
                 if locationManager.gyms.isEmpty {
                     locationManager.searchNearbyGyms()
                 }
@@ -166,21 +164,19 @@ struct MapView: View {
         }
     }
     
-    // MARK: - Helper-Methoden
-    
-    // Centers the map on the user's current location
+    // Center map on user location
     private func centerMapOnUser() {
         if let userLocation = locationManager.userLocation {
             locationManager.region = MKCoordinateRegion(
                 center: userLocation.coordinate,
-                span: locationManager.region.span // Keep current zoom level
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
             )
         }
     }
 }
 
-// Supporting Views
-struct GymMapMarker: View {
+// Simple gym marker view
+struct GymMarkerView: View {
     let gym: GymLocation
     let isSelected: Bool
     
@@ -196,17 +192,17 @@ struct GymMapMarker: View {
                 .foregroundColor(isSelected ? AppColors.darkGreen : AppColors.lightGreen)
         }
         .scaleEffect(isSelected ? 1.2 : 1.0)
-        .animation(.spring(), value: isSelected)
     }
 }
 
+// Gym detail card
 struct GymDetailCard: View {
     let gym: GymLocation
     @Binding var isShowing: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Titel und Schließen-Button
+            // Title and close button
             HStack {
                 Text(gym.name)
                     .font(.title2)
@@ -224,7 +220,7 @@ struct GymDetailCard: View {
                 }
             }
             
-            // Bewertung und Status
+            // Rating and status
             HStack {
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
@@ -247,7 +243,7 @@ struct GymDetailCard: View {
             Divider()
                 .background(AppColors.darkGreen.opacity(0.3))
             
-            // Adresse und Entfernung
+            // Address and distance
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(gym.address)
@@ -270,10 +266,10 @@ struct GymDetailCard: View {
                 }
             }
             
-            // Aktionsschaltflächen
+            // Action buttons
             HStack(spacing: 16) {
                 Button(action: {
-                    // Check-in-Aktion
+                    // Check-in action
                 }) {
                     HStack {
                         Image(systemName: "mappin.circle.fill")
@@ -287,7 +283,7 @@ struct GymDetailCard: View {
                 }
                 
                 Button(action: {
-                    // Anruf-Aktion
+                    // Call action
                 }) {
                     HStack {
                         Image(systemName: "phone.fill")
@@ -307,7 +303,7 @@ struct GymDetailCard: View {
         .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
     }
     
-    // Function to open the Maps app with directions
+    // Function to open Maps app with directions
     private func openMapsWithDirections(to gym: GymLocation) {
         let placemark = MKPlacemark(coordinate: gym.coordinate)
         let mapItem = MKMapItem(placemark: placemark)
@@ -319,6 +315,7 @@ struct GymDetailCard: View {
     }
 }
 
+// Location permission view
 struct LocationPermissionView: View {
     let status: CLAuthorizationStatus
     
@@ -383,12 +380,5 @@ struct LocationPermissionView: View {
         default:
             return "Location access is required to use this app."
         }
-    }
-}
-
-// Preview provider
-struct MapView_Previews: PreviewProvider {
-    static var previews: some View {
-        MapView()
     }
 }

@@ -1,14 +1,7 @@
-//
-//  GymLocation.swift
-//  Vurn
-//
-//  Created by David Unterguggenberger on 30.04.2025.
-//
-
 import Foundation
 import MapKit
 
-struct GymLocation: Identifiable {
+struct GymLocation: Identifiable, Hashable {
     let id: Int
     let name: String
     let coordinate: CLLocationCoordinate2D
@@ -25,5 +18,25 @@ struct GymLocation: Identifiable {
         self.rating = rating
         self.address = address
         self.distance = distance
+    }
+    
+    // Custom hash function required because CLLocationCoordinate2D isn't Hashable
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
+        hasher.combine(coordinate.latitude)
+        hasher.combine(coordinate.longitude)
+        hasher.combine(isOpen)
+        hasher.combine(rating)
+    }
+    
+    // Custom equals function
+    static func == (lhs: GymLocation, rhs: GymLocation) -> Bool {
+        return lhs.id == rhs.id &&
+               lhs.name == rhs.name &&
+               lhs.coordinate.latitude == rhs.coordinate.latitude &&
+               lhs.coordinate.longitude == rhs.coordinate.longitude &&
+               lhs.isOpen == rhs.isOpen &&
+               lhs.rating == rhs.rating
     }
 }
