@@ -1,44 +1,21 @@
 import SwiftUI
-import MapKit
+import GoogleMaps
+import CoreLocation
 
 struct MapView: View {
-    @StateObject private var locationManager = LocationManager()
-    
+    @StateObject private var locationManager = GoogleLocationManager()
     @State private var selectedGym: GymLocation?
     @State private var showingDetail = false
     @State private var searchText = ""
     
-    var filteredGyms: [GymLocation] {
-        if searchText.isEmpty {
-            return locationManager.gyms
-        } else {
-            return locationManager.gyms.filter {
-                $0.name.lowercased().contains(searchText.lowercased())
-            }
-        }
-    }
-    
     var body: some View {
         NavigationView {
             ZStack {
-                // Using standard Map that works on all iOS versions
-                Map(
-                    coordinateRegion: $locationManager.region,
-                    interactionModes: .all,
-                    showsUserLocation: true,
-                    annotationItems: filteredGyms
-                ) { gym in
-                    MapAnnotation(coordinate: gym.coordinate) {
-                        GymMarkerView(gym: gym, isSelected: selectedGym?.id == gym.id)
-                            .onTapGesture {
-                                selectedGym = gym
-                                showingDetail = true
-                            }
-                    }
-                }
-                .ignoresSafeArea(edges: .top)
+                // Google Maps View
+                GoogleMapView(locationManager: locationManager, selectedGym: $selectedGym)
+                    .ignoresSafeArea(edges: .top)
                 
-                // UI Elements
+                // UI Overlay
                 VStack {
                     // Search bar
                     HStack {
@@ -49,9 +26,18 @@ struct MapView: View {
                             .padding(.horizontal)
                             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                             .foregroundColor(AppColors.textDark)
+                            .onSubmit {
+                                if !searchText.isEmpty {
+                                    locationManager.searchGyms(by: searchText)
+                                }
+                            }
                         
                         Button(action: {
-                            locationManager.searchNearbyGyms()
+                            if searchText.isEmpty {
+                                locationManager.searchNearbyGyms()
+                            } else {
+                                locationManager.searchGyms(by: searchText)
+                            }
                         }) {
                             Image(systemName: "magnifyingglass")
                                 .foregroundColor(AppColors.darkGreen)
@@ -65,49 +51,85 @@ struct MapView: View {
                     
                     // Status indicators
                     if locationManager.isSearching {
-                        Text("Searching for gyms...")
-                            .padding(8)
-                            .background(AppColors.darkGreen.opacity(0.8))
-                            .foregroundColor(AppColors.lightGreen)
-                            .cornerRadius(8)
-                    } else if let error = locationManager.searchError {
+                        HStack {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: AppColors.lightGreen))
+                                .scaleEffect(0.8)
+                            Text("Searching for gyms...")
+                                .font(.subheadline)
+                                .foregroundColor(AppColors.lightGreen)
+                        }
+                        .padding(8)
+                        .background(AppColors.darkGreen.opacity(0.9))
+                        .cornerRadius(8)
+                        .shadow(radius: 4)
+                    }
+                    
+                    if let error = locationManager.searchError {
                         Text(error)
-                            .foregroundColor(.red)
+                            .font(.subheadline)
+                            .foregroundColor(.white)
                             .padding(8)
-                            .background(AppColors.cardBackground.opacity(0.8))
+                            .background(Color.red.opacity(0.8))
                             .cornerRadius(8)
+                            .padding(.horizontal)
                     }
                     
                     Spacer()
+                    
+                    // Gym count indicator
+                    if !locationManager.gyms.isEmpty {
+                        HStack {
+                            Text("\(locationManager.gyms.count) gyms found")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(AppColors.lightGreen)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(AppColors.darkGreen.opacity(0.9))
+                                .cornerRadius(20)
+                        }
+                        .padding(.bottom, 8)
+                    }
                     
                     // Bottom controls
                     HStack {
                         // Refresh button
                         Button(action: {
+                            searchText = ""
                             locationManager.searchNearbyGyms()
                         }) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.title2)
-                                .padding()
-                                .background(AppColors.mediumGreen)
-                                .foregroundColor(AppColors.lightGreen)
-                                .clipShape(Circle())
-                                .shadow(radius: 4)
+                            VStack(spacing: 4) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.title2)
+                                Text("Refresh")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(AppColors.lightGreen)
+                            .frame(width: 60, height: 60)
+                            .background(AppColors.mediumGreen)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
                         }
+                        
                         
                         Spacer()
                         
                         // Center on user button
                         Button(action: {
-                            centerMapOnUser()
+                            locationManager.centerOnUserLocation()
                         }) {
-                            Image(systemName: "location")
-                                .font(.title2)
-                                .padding()
-                                .background(AppColors.mediumGreen)
-                                .foregroundColor(AppColors.lightGreen)
-                                .clipShape(Circle())
-                                .shadow(radius: 4)
+                            VStack(spacing: 4) {
+                                Image(systemName: "location.fill")
+                                    .font(.title2)
+                                Text("My Location")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(AppColors.lightGreen)
+                            .frame(width: 60, height: 60)
+                            .background(AppColors.mediumGreen)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
                         }
                     }
                     .padding(.horizontal)
@@ -115,16 +137,18 @@ struct MapView: View {
                 }
                 
                 // Gym detail card
-                if showingDetail, let gym = selectedGym {
+                if let gym = selectedGym {
                     VStack {
                         Spacer()
                         
-                        GymDetailCard(gym: gym, isShowing: $showingDetail)
-                            .padding(.horizontal)
-                            .padding(.bottom, 80)
-                            .transition(.move(edge: .bottom))
+                        GymDetailCard(gym: gym, isShowing: $showingDetail, onDismiss: {
+                            selectedGym = nil
+                        })
+                        .padding(.horizontal)
+                        .padding(.bottom, 80)
+                        .transition(.move(edge: .bottom))
+                        .animation(.spring(), value: selectedGym)
                     }
-                    .animation(.spring(), value: showingDetail)
                 }
                 
                 // Location permission view
@@ -139,140 +163,110 @@ struct MapView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(AppColors.darkGreen, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        // Filter action
-                    }) {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundColor(AppColors.lightGreen)
-                    }
-                }
-            }
             .onAppear {
-                // Start location updates
+                // Start location updates - this will automatically search for gyms when location is found
                 if locationManager.authorizationStatus == .authorizedWhenInUse ||
                    locationManager.authorizationStatus == .authorizedAlways {
                     locationManager.startLocationUpdates()
-                }
-                
-                // Search for gyms if none found
-                if locationManager.gyms.isEmpty {
-                    locationManager.searchNearbyGyms()
+                } else {
+                    // Request location permission if not granted
+                    locationManager.startLocationUpdates()
                 }
             }
         }
     }
-    
-    // Center map on user location
-    private func centerMapOnUser() {
-        if let userLocation = locationManager.userLocation {
-            locationManager.region = MKCoordinateRegion(
-                center: userLocation.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-            )
-        }
-    }
 }
 
-// Simple gym marker view
-struct GymMarkerView: View {
-    let gym: GymLocation
-    let isSelected: Bool
-    
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(isSelected ? AppColors.accentYellow : (gym.isOpen ? AppColors.mediumGreen : AppColors.darkGreen))
-                .frame(width: 40, height: 40)
-                .shadow(radius: 3)
-            
-            Image(systemName: "dumbbell.fill")
-                .font(.system(size: 20))
-                .foregroundColor(isSelected ? AppColors.darkGreen : AppColors.lightGreen)
-        }
-        .scaleEffect(isSelected ? 1.2 : 1.0)
-    }
-}
-
-// Gym detail card
+// Enhanced Gym Detail Card
 struct GymDetailCard: View {
     let gym: GymLocation
     @Binding var isShowing: Bool
+    let onDismiss: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Title and close button
+            // Header
             HStack {
-                Text(gym.name)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(AppColors.textDark)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(gym.name)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppColors.textDark)
+                        .lineLimit(2)
+                    
+                    // Distance and price level
+                    HStack {
+                        Text(gym.distance)
+                            .font(.subheadline)
+                            .foregroundColor(Color.gray)
+                        
+                        if let priceLevel = gym.priceLevel {
+                            Text("•")
+                                .foregroundColor(Color.gray)
+                            Text(String(repeating: "$", count: priceLevel + 1))
+                                .font(.subheadline)
+                                .foregroundColor(Color.gray)
+                        }
+                    }
+                }
                 
                 Spacer()
                 
-                Button(action: {
-                    isShowing = false
-                }) {
+                Button(action: onDismiss) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(AppColors.darkGreen)
                         .font(.title2)
                 }
             }
             
-            // Rating and status
+            // Status and Rating
             HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(AppColors.accentYellow)
-                    
-                    Text(String(format: "%.1f", gym.rating))
+                // Open/Closed status
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(gym.isOpen ? AppColors.mediumGreen : Color.red)
+                        .frame(width: 8, height: 8)
+                    Text(gym.isOpen ? "Open Now" : "Closed")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textDark)
+                        .foregroundColor(gym.isOpen ? AppColors.mediumGreen : Color.red)
                 }
                 
                 Spacer()
                 
-                Text(gym.isOpen ? "Open Now" : "Closed")
+                // Rating
+                if gym.rating > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .foregroundColor(AppColors.accentYellow)
+                            .font(.subheadline)
+                        Text(String(format: "%.1f", gym.rating))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(AppColors.textDark)
+                    }
+                }
+            }
+            
+            // Address
+            if !gym.address.isEmpty && gym.address != "No address available" {
+                Text(gym.address)
                     .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(gym.isOpen ? AppColors.mediumGreen : Color.red)
+                    .foregroundColor(Color.gray)
+                    .lineLimit(2)
             }
             
             Divider()
                 .background(AppColors.darkGreen.opacity(0.3))
             
-            // Address and distance
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(gym.address)
-                        .font(.subheadline)
-                        .foregroundColor(AppColors.textDark)
-                    
-                    Text(gym.distance)
-                        .font(.caption)
-                        .foregroundColor(Color.gray)
-                }
-                
-                Spacer()
-                
-                Button(action: {
-                    openMapsWithDirections(to: gym)
-                }) {
-                    Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
-                        .foregroundColor(AppColors.mediumGreen)
-                        .font(.title3)
-                }
-            }
-            
             // Action buttons
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
+                // Check-in button
                 Button(action: {
-                    // Check-in action
+                    // TODO: Implement check-in functionality
                 }) {
                     HStack {
-                        Image(systemName: "mappin.circle.fill")
+                        Image(systemName: "location.circle.fill")
                         Text("Check In")
                     }
                     .frame(maxWidth: .infinity)
@@ -282,12 +276,13 @@ struct GymDetailCard: View {
                     .cornerRadius(12)
                 }
                 
+                // Directions button
                 Button(action: {
-                    // Call action
+                    openInGoogleMaps(gym: gym)
                 }) {
                     HStack {
-                        Image(systemName: "phone.fill")
-                        Text("Call")
+                        Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+                        Text("Directions")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -296,6 +291,37 @@ struct GymDetailCard: View {
                     .cornerRadius(12)
                 }
             }
+            
+            // Additional buttons row
+            HStack(spacing: 12) {
+                // Call button (if phone number available)
+                if let phoneNumber = gym.phoneNumber, !phoneNumber.isEmpty {
+                    Button(action: {
+                        callGym(phoneNumber: phoneNumber)
+                    }) {
+                        Image(systemName: "phone.fill")
+                            .frame(width: 44, height: 44)
+                            .background(AppColors.darkGreen.opacity(0.1))
+                            .foregroundColor(AppColors.darkGreen)
+                            .clipShape(Circle())
+                    }
+                }
+                
+                // Website button (if available)
+                if let website = gym.website, !website.isEmpty {
+                    Button(action: {
+                        openWebsite(urlString: website)
+                    }) {
+                        Image(systemName: "globe")
+                            .frame(width: 44, height: 44)
+                            .background(AppColors.darkGreen.opacity(0.1))
+                            .foregroundColor(AppColors.darkGreen)
+                            .clipShape(Circle())
+                    }
+                }
+                
+                Spacer()
+            }
         }
         .padding()
         .background(AppColors.cardBackground)
@@ -303,19 +329,35 @@ struct GymDetailCard: View {
         .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
     }
     
-    // Function to open Maps app with directions
-    private func openMapsWithDirections(to gym: GymLocation) {
-        let placemark = MKPlacemark(coordinate: gym.coordinate)
-        let mapItem = MKMapItem(placemark: placemark)
-        mapItem.name = gym.name
+    private func openInGoogleMaps(gym: GymLocation) {
+        let lat = gym.coordinate.latitude
+        let lon = gym.coordinate.longitude
+        let name = gym.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         
-        mapItem.openInMaps(launchOptions: [
-            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
-        ])
+        // Try to open in Google Maps app first
+        if let url = URL(string: "comgooglemaps://?q=\(name)&center=\(lat),\(lon)&zoom=14"),
+           UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        } else if let url = URL(string: "https://www.google.com/maps/search/?api=1&query=\(lat),\(lon)&query_place_id=\(gym.id)") {
+            // Fallback to web
+            UIApplication.shared.open(url)
+        }
+    }
+    
+    private func callGym(phoneNumber: String) {
+        if let url = URL(string: "tel://\(phoneNumber)") {
+            UIApplication.shared.open(url)
+        }
+    }
+    
+    private func openWebsite(urlString: String) {
+        if let url = URL(string: urlString) {
+            UIApplication.shared.open(url)
+        }
     }
 }
 
-// Location permission view
+// Location permission view (reused from original)
 struct LocationPermissionView: View {
     let status: CLAuthorizationStatus
     
