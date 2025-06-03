@@ -223,7 +223,7 @@ struct HomeView: View {
                             
                             HStack(alignment: .top, spacing: 20) {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    BenefitRow(icon: "coin.fill", text: "Earn 5 Vurn Coins per gym minute")
+                                    BenefitRow(icon: "dollarsign.circle.fill", text: "Earn 5 Vurn Coins per gym minute")
                                     BenefitRow(icon: "gift.fill", text: "Exclusive premium rewards")
                                     BenefitRow(icon: "chart.bar.fill", text: "Detailed workout analytics")
                                 }
