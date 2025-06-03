@@ -53,8 +53,10 @@ class GoogleLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
             zoom: 14
         )
         
-        // Search for gyms in this area
-        searchGymsInArea(center: location.coordinate)
+        // Only search for gyms on first location update
+        if gyms.isEmpty {
+            searchGymsInArea(center: location.coordinate)
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
