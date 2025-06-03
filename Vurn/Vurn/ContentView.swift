@@ -4,10 +4,16 @@ import FirebaseAuth
 struct ContentView: View {
     @StateObject private var authService = AuthService()
     @State private var selectedTab = 0
+    @State private var showLaunchScreen = true
     
     var body: some View {
         Group {
-            if authService.currentUser != nil {
+            if showLaunchScreen {
+                // Show launch animation
+                LaunchView {
+                    showLaunchScreen = false
+                }
+            } else if authService.currentUser != nil {
                 // User is logged in - show main app
                 ZStack {
                     // Main background
