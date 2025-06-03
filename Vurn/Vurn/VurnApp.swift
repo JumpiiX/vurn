@@ -1,4 +1,5 @@
 import SwiftUI
+import GoogleMaps
 
 @main
 struct VurnApp: App {
@@ -12,6 +13,9 @@ struct VurnApp: App {
     }
     
     init() {
+        // Initialize Google Maps with API key (includes Places)
+        GMSServices.provideAPIKey(GoogleMapsConfig.apiKey)
+        
         // Set global appearance for navigation bars
         let navBarAppearance = UINavigationBarAppearance()
         navBarAppearance.configureWithOpaqueBackground()
