@@ -94,34 +94,38 @@ struct LaunchView: View {
                 }
                 .frame(width: 140, height: 140)
                 
-                // "Vurn" text appears when flame ignites
-                VStack(spacing: 12) {
-                    // Main title with fire effect
+                // Epic "Vurn" text appears when flame ignites
+                VStack(spacing: 16) {
+                    // Main title with massive fire effect
                     ZStack {
-                        // Fire glow behind text
+                        // Multiple fire glow layers behind text
                         if flameIgnited {
-                            Text("Vurn")
-                                .font(.system(size: 48, weight: .black, design: .rounded))
-                                .foregroundColor(AppColors.accentYellow)
-                                .blur(radius: 8)
-                                .opacity(0.6)
+                            ForEach(0..<3, id: \.self) { layer in
+                                Text("VURN")
+                                    .font(.system(size: 72, weight: .black, design: .rounded))
+                                    .foregroundColor(AppColors.accentYellow.opacity(0.8 - Double(layer) * 0.2))
+                                    .blur(radius: CGFloat(12 + layer * 8))
+                                    .scaleEffect(1.0 + CGFloat(layer) * 0.1)
+                            }
                         }
                         
-                        // Main text
-                        Text("Vurn")
-                            .font(.system(size: 48, weight: .black, design: .rounded))
+                        // Main text - MASSIVE and BOLD
+                        Text("VURN")
+                            .font(.system(size: 72, weight: .black, design: .rounded))
                             .foregroundColor(AppColors.lightGreen)
+                            .shadow(color: AppColors.accentYellow.opacity(0.5), radius: 4, x: 0, y: 2)
                     }
                     .opacity(textOpacity)
-                    .scaleEffect(textOpacity > 0 ? 1 : 0.8)
-                    .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(4.0), value: textOpacity)
+                    .scaleEffect(textOpacity > 0 ? 1 : 0.5)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.7), value: textOpacity)
                     
-                    // Tagline
-                    Text("Ignite Your Fitness")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(AppColors.accentYellow.opacity(0.9))
+                    // Epic tagline
+                    Text("IGNITE YOUR FITNESS")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundColor(AppColors.accentYellow)
                         .opacity(textOpacity)
-                        .animation(.easeInOut(duration: 0.8).delay(4.5), value: textOpacity)
+                        .scaleEffect(textOpacity > 0 ? 1 : 0.8)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: textOpacity)
                 }
             }
         }
@@ -157,8 +161,8 @@ struct LaunchView: View {
             createSparkleExplosion()
         }
         
-        // Phase 6: "Vurn" text appears (4s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+        // Phase 6: "Vurn" text appears when flame ignites (3.2s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) {
             textOpacity = 1.0
         }
         
@@ -241,7 +245,7 @@ struct LaunchView: View {
         sparkles = (0..<24).map { index in
             let angle = Double(index) * (2 * .pi / 24)
             let radius = CGFloat.random(in: 60...120)
-            SparkleEffect(
+            return SparkleEffect(
                 id: index,
                 position: CGPoint(
                     x: cos(angle) * radius,
