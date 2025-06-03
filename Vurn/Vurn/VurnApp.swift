@@ -1,5 +1,6 @@
 import SwiftUI
 import GoogleMaps
+import FirebaseCore
 
 @main
 struct VurnApp: App {
@@ -13,6 +14,9 @@ struct VurnApp: App {
     }
     
     init() {
+        // Initialize Firebase
+        FirebaseApp.configure()
+        
         // Initialize Google Maps with API key (includes Places)
         GMSServices.provideAPIKey(GoogleMapsConfig.apiKey)
         

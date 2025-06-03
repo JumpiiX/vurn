@@ -1,19 +1,25 @@
 import SwiftUI
+import FirebaseAuth
 
 struct ContentView: View {
+    @StateObject private var authService = AuthService()
     @State private var selectedTab = 0
-    @State private var username = "David" // Replace with actual user data
-    @State private var vurnCoins = 580 // Replace with actual user data
     
     var body: some View {
-        ZStack {
-            // Main background
-            AppColors.background
-                .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                // Header with username and Vurn coins
-                HeaderView(username: username, vurnCoins: vurnCoins)
+        Group {
+            if authService.currentUser != nil {
+                // User is logged in - show main app
+                ZStack {
+                    // Main background
+                    AppColors.background
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 0) {
+                        // Header with username and Vurn coins
+                        HeaderView(
+                            username: authService.userProfile?.username ?? "User", 
+                            vurnCoins: 580 // TODO: Load from user stats
+                        )
                 
                 // Tab view with all the tabs
                 TabView(selection: $selectedTab) {
@@ -67,6 +73,11 @@ struct ContentView: View {
                     UITabBar.appearance().standardAppearance = appearance
                     UITabBar.appearance().scrollEdgeAppearance = appearance
                 }
+                    }
+                }
+            } else {
+                // User not logged in - show login
+                LoginView()
             }
         }
     }

@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		6951F1342DEF3882006C362F /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 6951F1332DEF3882006C362F /* GoogleMaps */; };
+		6951F1462DEFB729006C362F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6951F1452DEFB729006C362F /* FirebaseAuth */; };
+		6951F1482DEFB729006C362F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6951F1472DEFB729006C362F /* FirebaseCore */; };
+		6951F14A2DEFB729006C362F /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 6951F1492DEFB729006C362F /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +60,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				6951F1342DEF3882006C362F /* GoogleMaps in Frameworks */,
+				6951F14A2DEFB729006C362F /* FirebaseFirestore in Frameworks */,
+				6951F1482DEFB729006C362F /* FirebaseCore in Frameworks */,
+				6951F1462DEFB729006C362F /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +124,9 @@
 			name = Vurn;
 			packageProductDependencies = (
 				6951F1332DEF3882006C362F /* GoogleMaps */,
+				6951F1452DEFB729006C362F /* FirebaseAuth */,
+				6951F1472DEFB729006C362F /* FirebaseCore */,
+				6951F1492DEFB729006C362F /* FirebaseFirestore */,
 			);
 			productName = Vurn;
 			productReference = 6974E1462DC24B9B00B21AC5 /* Vurn.app */;
@@ -203,6 +212,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				6951F1322DEF3882006C362F /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
+				6951F1442DEFB729006C362F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6974E1472DC24B9B00B21AC5 /* Products */;
@@ -589,6 +599,14 @@
 				minimumVersion = 10.0.0;
 			};
 		};
+		6951F1442DEFB729006C362F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.14.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -596,6 +614,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6951F1322DEF3882006C362F /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
 			productName = GoogleMaps;
+		};
+		6951F1452DEFB729006C362F /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6951F1442DEFB729006C362F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		6951F1472DEFB729006C362F /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6951F1442DEFB729006C362F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		6951F1492DEFB729006C362F /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6951F1442DEFB729006C362F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

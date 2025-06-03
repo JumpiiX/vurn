@@ -60,3 +60,8 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Firebase & API Keys - NEVER COMMIT THESE
+Vurn/Vurn/GoogleService-Info.plist
+Vurn/Vurn/FirebaseConfig.swift
+Vurn/Vurn/GoogleMapsConfig.swift
