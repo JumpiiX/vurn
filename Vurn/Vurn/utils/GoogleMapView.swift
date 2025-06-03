@@ -29,8 +29,18 @@ struct GoogleMapView: UIViewRepresentable {
     }
     
     func updateUIView(_ mapView: GMSMapView, context: Context) {
-        // Update camera position when user location changes
-        mapView.animate(to: locationManager.cameraPosition)
+        // Only animate to camera position if it's significantly different
+        let currentCamera = mapView.camera
+        let targetCamera = locationManager.cameraPosition
+        let distance = GMSGeometryDistance(
+            CLLocationCoordinate2D(latitude: currentCamera.target.latitude, longitude: currentCamera.target.longitude),
+            CLLocationCoordinate2D(latitude: targetCamera.target.latitude, longitude: targetCamera.target.longitude)
+        )
+        
+        // Only animate if distance is more than 1000 meters
+        if distance > 1000 {
+            mapView.animate(to: locationManager.cameraPosition)
+        }
         
         // Clear existing markers
         mapView.clear()
@@ -56,43 +66,70 @@ struct GoogleMapView: UIViewRepresentable {
         Coordinator(self)
     }
     
-    // Create simple, highly visible gym markers
+    // Create building-style gym markers
     private func createMarkerView(for gym: GymLocation, isSelected: Bool) -> UIView {
-        let size: CGFloat = isSelected ? 60 : 50
-        let view = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
+        let width: CGFloat = isSelected ? 50 : 40
+        let height: CGFloat = isSelected ? 60 : 50
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
         
-        // Main circle - use Vurn app colors
-        let circleView = UIView(frame: view.bounds)
+        // Create building shape
+        let buildingView = UIView(frame: CGRect(x: 0, y: 10, width: width, height: height - 10))
         
+        // Building color based on status
         if isSelected {
-            circleView.backgroundColor = UIColor(AppColors.accentYellow) // Bright yellow for selected
+            buildingView.backgroundColor = UIColor(AppColors.accentYellow)
         } else if gym.isOpen {
-            circleView.backgroundColor = UIColor(AppColors.mediumGreen) // Green for open
+            buildingView.backgroundColor = UIColor(AppColors.mediumGreen)
         } else {
-            circleView.backgroundColor = UIColor(AppColors.darkGreen) // Dark green for closed
+            buildingView.backgroundColor = UIColor(AppColors.darkGreen).withAlphaComponent(0.8)
         }
         
-        circleView.layer.cornerRadius = size / 2
+        buildingView.layer.cornerRadius = 4
         
-        // Strong white border for maximum visibility
-        circleView.layer.borderWidth = 4
-        circleView.layer.borderColor = UIColor.white.cgColor
+        // Add roof
+        let roofPath = UIBezierPath()
+        roofPath.move(to: CGPoint(x: width / 2, y: 0))
+        roofPath.addLine(to: CGPoint(x: 0, y: 15))
+        roofPath.addLine(to: CGPoint(x: width, y: 15))
+        roofPath.close()
+        
+        let roofLayer = CAShapeLayer()
+        roofLayer.path = roofPath.cgPath
+        roofLayer.fillColor = isSelected ? UIColor(AppColors.accentYellow).cgColor : UIColor(AppColors.mediumGreen).cgColor
+        view.layer.addSublayer(roofLayer)
+        
+        // Windows effect
+        let windowSize: CGFloat = 6
+        let windowSpacing: CGFloat = 4
+        let windowsPerRow = 3
+        
+        for row in 0..<3 {
+            for col in 0..<windowsPerRow {
+                let x = CGFloat(col) * (windowSize + windowSpacing) + 6
+                let y = CGFloat(row) * (windowSize + windowSpacing) + 20
+                
+                let window = UIView(frame: CGRect(x: x, y: y, width: windowSize, height: windowSize))
+                window.backgroundColor = UIColor(AppColors.lightGreen).withAlphaComponent(0.8)
+                window.layer.cornerRadius = 1
+                view.addSubview(window)
+            }
+        }
+        
+        view.addSubview(buildingView)
+        
+        // Add dumbbell icon on top
+        let iconView = UIImageView(frame: CGRect(x: width/2 - 10, y: 15, width: 20, height: 20))
+        let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
+        iconView.image = UIImage(systemName: "dumbbell.fill", withConfiguration: config)
+        iconView.tintColor = isSelected ? UIColor(AppColors.darkGreen) : UIColor.white
+        iconView.contentMode = .scaleAspectFit
+        view.addSubview(iconView)
         
         // Shadow for depth
-        circleView.layer.shadowColor = UIColor.black.cgColor
-        circleView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        circleView.layer.shadowRadius = 4
-        circleView.layer.shadowOpacity = 0.5
-        
-        view.addSubview(circleView)
-        
-        // Simple "GYM" text - most readable
-        let label = UILabel(frame: view.bounds)
-        label.text = "GYM"
-        label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: isSelected ? 14 : 12, weight: .black)
-        label.textColor = isSelected ? UIColor(AppColors.darkGreen) : UIColor.white
-        view.addSubview(label)
+        buildingView.layer.shadowColor = UIColor.black.cgColor
+        buildingView.layer.shadowOffset = CGSize(width: 0, height: 3)
+        buildingView.layer.shadowRadius = 5
+        buildingView.layer.shadowOpacity = 0.4
         
         return view
     }
@@ -118,6 +155,8 @@ struct GoogleMapView: UIViewRepresentable {
         // Automatically search for gyms when map stops moving
         func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
             print("Map idle at: \(position.target.latitude), \(position.target.longitude)")
+            // Update the camera position in location manager without triggering animation
+            parent.locationManager.cameraPosition = position
             parent.locationManager.searchGymsInArea(center: position.target)
         }
     }
