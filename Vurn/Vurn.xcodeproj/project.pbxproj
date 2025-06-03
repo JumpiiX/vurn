@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6951F1342DEF3882006C362F /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 6951F1332DEF3882006C362F /* GoogleMaps */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		6974E1572DC24B9C00B21AC5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6951F1342DEF3882006C362F /* GoogleMaps in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = Vurn;
 			packageProductDependencies = (
+				6951F1332DEF3882006C362F /* GoogleMaps */,
 			);
 			productName = Vurn;
 			productReference = 6974E1462DC24B9B00B21AC5 /* Vurn.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 6974E13D2DC24B9B00B21AC5;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6951F1322DEF3882006C362F /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6974E1472DC24B9B00B21AC5 /* Products */;
 			projectDirPath = "";
@@ -400,6 +409,7 @@
 				DEVELOPMENT_TEAM = P8994K3SK6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationQueriesSchemes = "comgooglemaps googlechromes comgooglemaps-x-callback";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Vurn uses your location to detect when you're at the gym, even when the app is closed";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Vurn needs your location to find gyms near you";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -434,6 +444,7 @@
 				DEVELOPMENT_TEAM = P8994K3SK6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationQueriesSchemes = "comgooglemaps googlechromes comgooglemaps-x-callback";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Vurn uses your location to detect when you're at the gym, even when the app is closed";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Vurn needs your location to find gyms near you";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -568,6 +579,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6951F1322DEF3882006C362F /* XCRemoteSwiftPackageReference "ios-maps-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6951F1332DEF3882006C362F /* GoogleMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6951F1322DEF3882006C362F /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
+			productName = GoogleMaps;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6974E13E2DC24B9B00B21AC5 /* Project object */;
 }
