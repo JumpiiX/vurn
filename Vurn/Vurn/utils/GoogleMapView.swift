@@ -5,6 +5,7 @@ import CoreLocation
 struct GoogleMapView: UIViewRepresentable {
     @ObservedObject var locationManager: GoogleLocationManager
     @Binding var selectedGym: GymLocation?
+    var gymsToDisplay: [GymLocation]
     
     func makeUIView(context: Context) -> GMSMapView {
         let camera = locationManager.cameraPosition
@@ -45,8 +46,8 @@ struct GoogleMapView: UIViewRepresentable {
         // Clear existing markers
         mapView.clear()
         
-        // Add gym markers
-        for gym in locationManager.gyms {
+        // Add gym markers - use gymsToDisplay instead of all gyms
+        for gym in gymsToDisplay {
             let marker = GMSMarker()
             marker.position = gym.coordinate
             marker.title = gym.name
@@ -59,7 +60,7 @@ struct GoogleMapView: UIViewRepresentable {
             marker.iconView = markerView
         }
         
-        print("Updated map with \(locationManager.gyms.count) gym markers")
+        print("Updated map with \(gymsToDisplay.count) gym markers (filtered from \(locationManager.gyms.count) total)")
     }
     
     func makeCoordinator() -> Coordinator {

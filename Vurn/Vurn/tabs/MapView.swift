@@ -7,12 +7,23 @@ struct MapView: View {
     @State private var selectedGym: GymLocation?
     @State private var showingDetail = false
     @State private var searchText = ""
+    @State private var allGyms: [GymLocation] = []
+    
+    var filteredGyms: [GymLocation] {
+        if searchText.isEmpty {
+            return locationManager.gyms
+        } else {
+            return locationManager.gyms.filter { gym in
+                gym.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
     
     var body: some View {
         NavigationView {
             ZStack {
                 // Google Maps View
-                GoogleMapView(locationManager: locationManager, selectedGym: $selectedGym)
+                GoogleMapView(locationManager: locationManager, selectedGym: $selectedGym, gymsToDisplay: filteredGyms)
                     .ignoresSafeArea(edges: .top)
                 
                 // UI Overlay
@@ -29,8 +40,14 @@ struct MapView: View {
                                     .foregroundColor(AppColors.lightGreen)
                                     .font(.system(size: 16, weight: .medium))
                                     .onSubmit {
-                                        if !searchText.isEmpty {
-                                            locationManager.searchGyms(by: searchText)
+                                        if !searchText.isEmpty, let firstMatch = filteredGyms.first {
+                                            // Zoom to first matching gym
+                                            selectedGym = firstMatch
+                                            locationManager.cameraPosition = GMSCameraPosition.camera(
+                                                withLatitude: firstMatch.coordinate.latitude,
+                                                longitude: firstMatch.coordinate.longitude,
+                                                zoom: 16
+                                            )
                                         }
                                     }
                                 
@@ -94,8 +111,14 @@ struct MapView: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "dumbbell.fill")
                                     .font(.system(size: 12))
-                                Text("\(locationManager.gyms.count)")
-                                    .font(.system(size: 14, weight: .bold))
+                                
+                                if searchText.isEmpty {
+                                    Text("\(locationManager.gyms.count)")
+                                        .font(.system(size: 14, weight: .bold))
+                                } else {
+                                    Text("\(filteredGyms.count)/\(locationManager.gyms.count)")
+                                        .font(.system(size: 14, weight: .bold))
+                                }
                             }
                             .foregroundColor(AppColors.lightGreen)
                             .padding(.horizontal, 12)
