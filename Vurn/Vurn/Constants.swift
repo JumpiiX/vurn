@@ -15,6 +15,9 @@ struct AppColors {
     static let textSecondary = lightGreen.opacity(0.8)
     static let textDark = Color(hex: "212121")
     static let divider = lightGreen.opacity(0.2)
+    
+    // Gym status colors
+    static let closedGym = Color(hex: "757575") // Gray for closed gyms
 }
 
 // Extension to create Color from hex string

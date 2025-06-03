@@ -80,9 +80,9 @@ struct GoogleMapView: UIViewRepresentable {
         if isSelected {
             buildingView.backgroundColor = UIColor(AppColors.accentYellow)
         } else if gym.isOpen {
-            buildingView.backgroundColor = UIColor(AppColors.mediumGreen)
+            buildingView.backgroundColor = UIColor(AppColors.accentYellow)
         } else {
-            buildingView.backgroundColor = UIColor(AppColors.darkGreen).withAlphaComponent(0.8)
+            buildingView.backgroundColor = UIColor(AppColors.closedGym)
         }
         
         buildingView.layer.cornerRadius = 4
@@ -96,7 +96,13 @@ struct GoogleMapView: UIViewRepresentable {
         
         let roofLayer = CAShapeLayer()
         roofLayer.path = roofPath.cgPath
-        roofLayer.fillColor = isSelected ? UIColor(AppColors.accentYellow).cgColor : UIColor(AppColors.mediumGreen).cgColor
+        if isSelected {
+            roofLayer.fillColor = UIColor(AppColors.accentYellow).cgColor
+        } else if gym.isOpen {
+            roofLayer.fillColor = UIColor(AppColors.accentYellow).cgColor
+        } else {
+            roofLayer.fillColor = UIColor(AppColors.closedGym).cgColor
+        }
         view.layer.addSublayer(roofLayer)
         
         // Windows effect
