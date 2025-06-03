@@ -128,7 +128,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     
                     // Create gym object
                     return GymLocation(
-                        id: index + 1,
+                        id: "\(index + 1)",
                         name: item.name ?? "Unnamed Gym",
                         coordinate: item.placemark.coordinate,
                         isOpen: self.isGymOpen(), // Random for demo purposes
