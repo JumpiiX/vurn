@@ -18,36 +18,45 @@ struct MapView: View {
                 // UI Overlay
                 VStack {
                     // Search bar
-                    HStack {
-                        TextField("Search for gyms", text: $searchText)
-                            .padding(10)
-                            .background(AppColors.cardBackground)
-                            .cornerRadius(8)
-                            .padding(.horizontal)
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                            .foregroundColor(AppColors.textDark)
-                            .onSubmit {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 12) {
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(AppColors.lightGreen.opacity(0.6))
+                                    .font(.system(size: 16, weight: .medium))
+                                
+                                TextField("Search gyms...", text: $searchText)
+                                    .foregroundColor(AppColors.lightGreen)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .onSubmit {
+                                        if !searchText.isEmpty {
+                                            locationManager.searchGyms(by: searchText)
+                                        }
+                                    }
+                                
                                 if !searchText.isEmpty {
-                                    locationManager.searchGyms(by: searchText)
+                                    Button(action: {
+                                        searchText = ""
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(AppColors.lightGreen.opacity(0.6))
+                                            .font(.system(size: 16))
+                                    }
                                 }
                             }
-                        
-                        Button(action: {
-                            if searchText.isEmpty {
-                                locationManager.searchNearbyGyms()
-                            } else {
-                                locationManager.searchGyms(by: searchText)
-                            }
-                        }) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(AppColors.darkGreen)
-                                .padding(10)
-                                .background(AppColors.accentYellow)
-                                .clipShape(Circle())
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(AppColors.darkGreen.opacity(0.95))
+                            .cornerRadius(25)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .stroke(AppColors.mediumGreen, lineWidth: 1)
+                            )
                         }
-                        .padding(.trailing)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 60)
+                        .shadow(color: AppColors.darkGreen.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
-                    .padding(.top, 60)
                     
                     // Status indicators
                     if locationManager.isSearching {
@@ -77,62 +86,54 @@ struct MapView: View {
                     
                     Spacer()
                     
-                    // Gym count indicator
+                    // Gym count indicator (subtle, top right)
                     if !locationManager.gyms.isEmpty {
                         HStack {
-                            Text("\(locationManager.gyms.count) gyms found")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(AppColors.lightGreen)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(AppColors.darkGreen.opacity(0.9))
-                                .cornerRadius(20)
+                            Spacer()
+                            
+                            HStack(spacing: 6) {
+                                Image(systemName: "dumbbell.fill")
+                                    .font(.system(size: 12))
+                                Text("\(locationManager.gyms.count)")
+                                    .font(.system(size: 14, weight: .bold))
+                            }
+                            .foregroundColor(AppColors.lightGreen)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(AppColors.darkGreen.opacity(0.9))
+                            .cornerRadius(15)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .stroke(AppColors.mediumGreen.opacity(0.5), lineWidth: 1)
+                            )
+                            .padding(.trailing, 20)
                         }
-                        .padding(.bottom, 8)
+                        .padding(.top, 8)
                     }
                     
-                    // Bottom controls
+                    // Floating action button for location
                     HStack {
-                        // Refresh button
-                        Button(action: {
-                            searchText = ""
-                            locationManager.searchNearbyGyms()
-                        }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.title2)
-                                Text("Refresh")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(AppColors.lightGreen)
-                            .frame(width: 60, height: 60)
-                            .background(AppColors.mediumGreen)
-                            .clipShape(Circle())
-                            .shadow(radius: 4)
-                        }
-                        
-                        
                         Spacer()
                         
-                        // Center on user button
-                        Button(action: {
-                            locationManager.centerOnUserLocation()
-                        }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: "location.fill")
-                                    .font(.title2)
-                                Text("My Location")
-                                    .font(.caption)
+                        VStack(spacing: 16) {
+                            // My Location button
+                            Button(action: {
+                                locationManager.centerOnUserLocation()
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(AppColors.accentYellow)
+                                        .frame(width: 56, height: 56)
+                                    
+                                    Image(systemName: "location.fill")
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(AppColors.darkGreen)
+                                }
                             }
-                            .foregroundColor(AppColors.lightGreen)
-                            .frame(width: 60, height: 60)
-                            .background(AppColors.mediumGreen)
-                            .clipShape(Circle())
-                            .shadow(radius: 4)
+                            .shadow(color: AppColors.darkGreen.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
+                        .padding(.trailing, 20)
                     }
-                    .padding(.horizontal)
                     .padding(.bottom, 30)
                 }
                 
@@ -191,7 +192,7 @@ struct GymDetailCard: View {
                     Text(gym.name)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(AppColors.textDark)
+                        .foregroundColor(AppColors.lightGreen)
                         .lineLimit(2)
                     
                     // Distance and price level
@@ -243,7 +244,7 @@ struct GymDetailCard: View {
                         Text(String(format: "%.1f", gym.rating))
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(AppColors.textDark)
+                            .foregroundColor(AppColors.lightGreen)
                     }
                 }
             }
@@ -252,12 +253,12 @@ struct GymDetailCard: View {
             if !gym.address.isEmpty && gym.address != "No address available" {
                 Text(gym.address)
                     .font(.subheadline)
-                    .foregroundColor(Color.gray)
+                    .foregroundColor(AppColors.lightGreen.opacity(0.7))
                     .lineLimit(2)
             }
             
             Divider()
-                .background(AppColors.darkGreen.opacity(0.3))
+                .background(AppColors.mediumGreen.opacity(0.3))
             
             // Action buttons
             HStack(spacing: 12) {
@@ -324,9 +325,13 @@ struct GymDetailCard: View {
             }
         }
         .padding()
-        .background(AppColors.cardBackground)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .background(AppColors.darkGreen)
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(AppColors.mediumGreen, lineWidth: 2)
+        )
+        .shadow(color: AppColors.darkGreen.opacity(0.4), radius: 12, x: 0, y: 6)
     }
     
     private func openInGoogleMaps(gym: GymLocation) {
