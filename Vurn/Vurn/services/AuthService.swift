@@ -32,12 +32,12 @@ class AuthService: ObservableObject {
         errorMessage = nil
         
         do {
-            // Check if username is available
-            guard await isUsernameAvailable(username) else {
-                errorMessage = "Username is already taken"
-                isLoading = false
-                return false
-            }
+            // Skip username check for now (we'll add it back later with proper rules)
+            // guard await isUsernameAvailable(username) else {
+            //     errorMessage = "Username is already taken"
+            //     isLoading = false
+            //     return false
+            // }
             
             // Create Firebase Auth user
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
