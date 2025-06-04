@@ -164,7 +164,11 @@ struct GoogleMapView: UIViewRepresentable {
             print("Map idle at: \(position.target.latitude), \(position.target.longitude)")
             // Update the camera position in location manager without triggering animation
             parent.locationManager.cameraPosition = position
-            parent.locationManager.searchGymsInArea(center: position.target)
+            // Search for gyms at the current camera position
+            parent.locationManager.searchGymsAtLocation(
+                latitude: position.target.latitude,
+                longitude: position.target.longitude
+            )
         }
     }
 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct LoginView: View {
     @StateObject private var authService = AuthService()
-    @State private var email = ""
+    @State private var username = ""
     @State private var password = ""
     @State private var isShowingSignUp = false
     
@@ -33,18 +33,17 @@ struct LoginView: View {
                 
                 // Login Form
                 VStack(spacing: 20) {
-                    // Email Field
+                    // Username Field
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Email")
+                        Text("Username")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(AppColors.lightGreen)
                         
-                        TextField("Enter your email", text: $email)
+                        TextField("Enter your username", text: $username)
                             .textFieldStyle(VurnTextFieldStyle())
-                            .keyboardType(.emailAddress)
                             .autocapitalization(.none)
-                            .textContentType(.emailAddress)
+                            .textContentType(.username)
                     }
                     
                     // Password Field
@@ -70,7 +69,7 @@ struct LoginView: View {
                     // Login Button
                     Button(action: {
                         Task {
-                            await authService.signIn(email: email, password: password)
+                            await authService.signIn(username: username, password: password)
                         }
                     }) {
                         HStack {
@@ -88,7 +87,7 @@ struct LoginView: View {
                         .foregroundColor(AppColors.darkGreen)
                         .cornerRadius(12)
                     }
-                    .disabled(authService.isLoading || email.isEmpty || password.isEmpty)
+                    .disabled(authService.isLoading || username.isEmpty || password.isEmpty)
                     
                     // Sign Up Link
                     Button(action: {

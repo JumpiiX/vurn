@@ -18,6 +18,8 @@ class GoogleLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         zoom: 13
     )
     
+    private var isInitialLocationSet = false
+    
     override init() {
         super.init()
         setupLocationManager()
@@ -46,16 +48,20 @@ class GoogleLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         // Update the user's location
         userLocation = location
         
-        // Update camera position to center on user
-        cameraPosition = GMSCameraPosition.camera(
-            withLatitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
-            zoom: 14
-        )
-        
-        // Only search for gyms on first location update
-        if gyms.isEmpty {
-            searchGymsInArea(center: location.coordinate)
+        // Only set camera position on first location update
+        if !isInitialLocationSet {
+            cameraPosition = GMSCameraPosition.camera(
+                withLatitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude,
+                zoom: 14
+            )
+            isInitialLocationSet = true
+            
+            // Search for gyms at initial location
+            searchGymsAtLocation(
+                latitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude
+            )
         }
     }
     
@@ -72,13 +78,8 @@ class GoogleLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         print("Location manager failed with error: \(error.localizedDescription)")
     }
     
-    // Search for nearby gyms using Google Places API (New)
-    func searchNearbyGyms() {
-        guard let userLocation = userLocation else {
-            searchError = "Location not available"
-            return
-        }
-        
+    // Search for nearby gyms using Google Places API (New) - based on camera position
+    func searchGymsAtLocation(latitude: Double, longitude: Double) {
         isSearching = true
         searchError = nil
         
@@ -98,8 +99,8 @@ class GoogleLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
             "locationRestriction": [
                 "circle": [
                     "center": [
-                        "latitude": userLocation.coordinate.latitude,
-                        "longitude": userLocation.coordinate.longitude
+                        "latitude": latitude,
+                        "longitude": longitude
                     ],
                     "radius": 5000.0
                 ]
@@ -155,12 +156,13 @@ class GoogleLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
                         print("API returned \(places.count) places")
                         
                         // Convert to GymLocation objects
+                        let searchCenter = CLLocation(latitude: latitude, longitude: longitude)
                         self.gyms = places.map { place in
                             let gymLocation = CLLocation(
                                 latitude: place.location.latitude,
                                 longitude: place.location.longitude
                             )
-                            let distance = userLocation.distance(from: gymLocation)
+                            let distance = searchCenter.distance(from: gymLocation)
                             
                             let distanceString: String
                             let distanceInMiles = distance / 1609.34
@@ -205,6 +207,27 @@ class GoogleLocationManager: NSObject, ObservableObject, CLLocationManagerDelega
                 }
             }
         }.resume()
+    }
+    
+    // Search for nearby gyms using current camera position
+    func searchGymsAtCurrentLocation() {
+        searchGymsAtLocation(
+            latitude: cameraPosition.target.latitude,
+            longitude: cameraPosition.target.longitude
+        )
+    }
+    
+    // Search for nearby gyms using user's actual location (backward compatibility)
+    func searchNearbyGyms() {
+        guard let userLocation = userLocation else {
+            searchError = "Location not available"
+            return
+        }
+        
+        searchGymsAtLocation(
+            latitude: userLocation.coordinate.latitude,
+            longitude: userLocation.coordinate.longitude
+        )
     }
     
     // Search gyms by name using Places API (New)

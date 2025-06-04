@@ -58,4 +58,13 @@ struct GymLocation: Identifiable, Hashable {
                lhs.isOpen == rhs.isOpen &&
                lhs.rating == rhs.rating
     }
+    
+    // Convenience properties for Firebase GeoPoint
+    var latitude: Double {
+        return coordinate.latitude
+    }
+    
+    var longitude: Double {
+        return coordinate.longitude
+    }
 }

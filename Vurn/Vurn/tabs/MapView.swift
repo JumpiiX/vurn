@@ -188,14 +188,9 @@ struct MapView: View {
             .toolbarBackground(AppColors.darkGreen, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {
-                // Start location updates - this will automatically search for gyms when location is found
-                if locationManager.authorizationStatus == .authorizedWhenInUse ||
-                   locationManager.authorizationStatus == .authorizedAlways {
-                    locationManager.startLocationUpdates()
-                } else {
-                    // Request location permission if not granted
-                    locationManager.startLocationUpdates()
-                }
+                // Start location updates to get user's position for the "My Location" button
+                // The initial gym search will happen automatically when location is first obtained
+                locationManager.startLocationUpdates()
             }
         }
     }

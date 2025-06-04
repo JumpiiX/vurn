@@ -21,16 +21,18 @@ struct ContentView: View {
                         .ignoresSafeArea()
                     
                     VStack(spacing: 0) {
-                        // Header with username and Vurn coins
+                        // Header with username, coins, and streak
                         HeaderView(
                             username: authService.userProfile?.username ?? "User", 
-                            vurnCoins: 580 // TODO: Load from user stats
+                            vurnCoins: authService.userStats?.totalCoins ?? 0,
+                            currentStreak: authService.userStats?.currentStreak ?? 0
                         )
                 
                 // Tab view with all the tabs
                 TabView(selection: $selectedTab) {
                     // Home Tab
                     HomeView()
+                        .environmentObject(authService)
                         .tabItem {
                             Label("Home", systemImage: "house.fill")
                         }
@@ -89,10 +91,11 @@ struct ContentView: View {
     }
 }
 
-// Custom header view with username and Vurn coins
+// Custom header view with username, coins, and streak
 struct HeaderView: View {
     let username: String
     let vurnCoins: Int
+    let currentStreak: Int
     
     var body: some View {
         HStack {
@@ -104,30 +107,57 @@ struct HeaderView: View {
             
             Spacer()
             
-            // Vurn Coins with custom icon
-            HStack(spacing: 8) {
-                Text("\(vurnCoins)")
-                    .font(.headline)
-                    .foregroundColor(AppColors.accentYellow)
-                
-                // Custom Vurn coin icon
-                ZStack {
-                    Circle()
-                        .fill(AppColors.accentYellow)
-                        .frame(width: 28, height: 28)
+            HStack(spacing: 12) {
+                // Streak with custom flame icon
+                HStack(spacing: 6) {
+                    Text("\(currentStreak)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppColors.accentYellow)
                     
-                    Text("V")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(AppColors.darkGreen)
+                    // Custom flame icon for streak
+                    Image("flame-white")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 20, height: 20)
+                        .foregroundColor(AppColors.accentYellow)
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(AppColors.darkGreen.opacity(0.3))
+                .cornerRadius(15)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(AppColors.accentYellow.opacity(0.3), lineWidth: 1)
+                )
+                
+                // Vurn Coins with custom icon
+                HStack(spacing: 6) {
+                    Text("\(vurnCoins)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppColors.accentYellow)
+                    
+                    // Custom Vurn coin icon
+                    ZStack {
+                        Circle()
+                            .fill(AppColors.accentYellow)
+                            .frame(width: 26, height: 26)
+                        
+                        Text("V")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(AppColors.darkGreen)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(AppColors.darkGreen.opacity(0.3))
+                .cornerRadius(15)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(AppColors.accentYellow.opacity(0.3), lineWidth: 1)
+                )
             }
-            .padding(8)
-            .background(AppColors.darkGreen.opacity(0.5))
-            .cornerRadius(20)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(AppColors.accentYellow.opacity(0.5), lineWidth: 1)
-            )
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
@@ -138,5 +168,13 @@ struct HeaderView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+struct HeaderView_Previews: PreviewProvider {
+    static var previews: some View {
+        HeaderView(username: "David", vurnCoins: 1250, currentStreak: 7)
+            .padding()
+            .background(AppColors.background)
     }
 }

@@ -52,6 +52,7 @@ struct UserStats: Codable {
     var totalSessions: Int
     var totalMinutes: Int
     var lastSessionDate: Date?
+    var lastStreakUpdate: Date?
     
     init() {
         self.totalCoins = 0
@@ -60,5 +61,43 @@ struct UserStats: Codable {
         self.totalSessions = 0
         self.totalMinutes = 0
         self.lastSessionDate = nil
+        self.lastStreakUpdate = nil
+    }
+}
+
+// Gym session model
+struct GymSession: Codable, Identifiable {
+    var id: String?
+    let userId: String
+    let gymId: String
+    let gymName: String
+    let startTime: Date
+    var endTime: Date?
+    var duration: TimeInterval // in seconds
+    let location: GeoPoint // user's location when session started
+    let gymLocation: GeoPoint // gym's location
+    var isValidSession: Bool // true if session >= 30 minutes
+    
+    init(userId: String, gymId: String, gymName: String, userLocation: GeoPoint, gymLocation: GeoPoint) {
+        self.id = nil
+        self.userId = userId
+        self.gymId = gymId
+        self.gymName = gymName
+        self.startTime = Date()
+        self.endTime = nil
+        self.duration = 0
+        self.location = userLocation
+        self.gymLocation = gymLocation
+        self.isValidSession = false
+    }
+    
+    mutating func endSession() {
+        self.endTime = Date()
+        self.duration = endTime?.timeIntervalSince(startTime) ?? 0
+        self.isValidSession = duration >= 1800 // 30 minutes = 1800 seconds
+    }
+    
+    var durationInMinutes: Int {
+        return Int(duration / 60)
     }
 }

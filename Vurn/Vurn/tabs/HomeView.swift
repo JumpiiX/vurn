@@ -1,20 +1,33 @@
 import SwiftUI
 
 struct HomeView: View {
+    // Firebase services
+    @EnvironmentObject var authService: AuthService
+    @StateObject private var gymSessionService = GymSessionService()
+    @StateObject private var locationManager = GoogleLocationManager()
+    
     // State variables for the user's data
     @State private var isAtGym: Bool = false
-    @State private var currentStreak: Int = 4
     @State private var timeAtGymToday: Int = 0 // In minutes
-    @State private var vurnCoins: Int = 125
     @State private var isPro: Bool = false
     @State private var showProModal: Bool = false
     
-    // Sample gym visits for history
-    let recentGymVisits = [
-        GymVisit(date: Date().addingTimeInterval(-86400), duration: 65, location: "FitZone Gym"),
-        GymVisit(date: Date().addingTimeInterval(-86400 * 2), duration: 75, location: "FitZone Gym"),
-        GymVisit(date: Date().addingTimeInterval(-86400 * 3), duration: 90, location: "Power Fitness")
-    ]
+    // Real data from Firebase
+    private var currentStreak: Int {
+        authService.userStats?.currentStreak ?? 0
+    }
+    
+    private var vurnCoins: Int {
+        authService.userStats?.totalCoins ?? 0
+    }
+    
+    private var recentGymSessions: [GymSession] {
+        gymSessionService.recentSessions
+    }
+    
+    private var nearbyGyms: [GymLocation] {
+        Array(locationManager.gyms.prefix(3)) // Show first 3 gyms
+    }
     
     var body: some View {
         NavigationView {
@@ -162,9 +175,17 @@ struct HomeView: View {
                             .foregroundColor(AppColors.textPrimary)
                             .padding(.horizontal)
                         
-                        ForEach(recentGymVisits) { visit in
-                            GymVisitCard(visit: visit)
+                        if recentGymSessions.isEmpty {
+                            Text("No recent gym sessions")
+                                .font(.subheadline)
+                                .foregroundColor(AppColors.textSecondary)
                                 .padding(.horizontal)
+                                .padding(.vertical, 20)
+                        } else {
+                            ForEach(recentGymSessions) { session in
+                                GymSessionCard(session: session)
+                                    .padding(.horizontal)
+                            }
                         }
                     }
                     .padding(.top)
@@ -188,26 +209,32 @@ struct HomeView: View {
                         
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
-                                GymCard(
-                                    name: "FitZone Gym",
-                                    distance: "0.5 miles",
-                                    isOpen: true,
-                                    isFavorite: true
-                                )
-                                
-                                GymCard(
-                                    name: "Power Fitness",
-                                    distance: "1.2 miles",
-                                    isOpen: true,
-                                    isFavorite: false
-                                )
-                                
-                                GymCard(
-                                    name: "GymNation",
-                                    distance: "2.7 miles",
-                                    isOpen: false,
-                                    isFavorite: false
-                                )
+                                if nearbyGyms.isEmpty {
+                                    if locationManager.isSearching {
+                                        HStack {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                            Text("Finding nearby gyms...")
+                                                .font(.subheadline)
+                                                .foregroundColor(AppColors.textSecondary)
+                                        }
+                                        .padding()
+                                    } else {
+                                        Text("No nearby gyms found")
+                                            .font(.subheadline)
+                                            .foregroundColor(AppColors.textSecondary)
+                                            .padding()
+                                    }
+                                } else {
+                                    ForEach(nearbyGyms) { gym in
+                                        GymCard(
+                                            name: gym.name,
+                                            distance: gym.distance,
+                                            isOpen: gym.isOpen,
+                                            isFavorite: false // Could implement favorites later
+                                        )
+                                    }
+                                }
                             }
                             .padding(.horizontal)
                         }
@@ -257,6 +284,20 @@ struct HomeView: View {
             .sheet(isPresented: $showProModal) {
                 ProSubscriptionView(isPresented: $showProModal)
             }
+            .onAppear {
+                // Load recent gym sessions when view appears
+                Task {
+                    await gymSessionService.loadRecentSessions()
+                }
+                
+                // Start location updates and search for nearby gyms
+                locationManager.startLocationUpdates()
+                
+                // Search for gyms after a short delay to allow location to be obtained
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    locationManager.searchNearbyGyms()
+                }
+            }
         }
         .navigationBarHidden(true)
     }
@@ -292,15 +333,8 @@ struct GymTimerView: View {
     }
 }
 
-struct GymVisit: Identifiable {
-    let id = UUID()
-    let date: Date
-    let duration: Int // in minutes
-    let location: String
-}
-
-struct GymVisitCard: View {
-    let visit: GymVisit
+struct GymSessionCard: View {
+    let session: GymSession
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -312,11 +346,11 @@ struct GymVisitCard: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text(visit.location)
+                Text(session.gymName)
                     .font(.headline)
                     .foregroundColor(AppColors.textDark)
                 
-                Text(dateFormatter.string(from: visit.date))
+                Text(dateFormatter.string(from: session.startTime))
                     .font(.subheadline)
                     .foregroundColor(Color.gray)
             }
@@ -329,9 +363,23 @@ struct GymVisitCard: View {
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.mediumGreen)
                 
-                Text(visit.duration >= 60 ? "Streak Point Earned" : "No Streak Point")
-                    .font(.caption)
-                    .foregroundColor(visit.duration >= 60 ? AppColors.mediumGreen : Color.gray)
+                HStack(spacing: 4) {
+                    if session.isValidSession {
+                        Image("flame-white")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 12, height: 12)
+                            .foregroundColor(AppColors.accentYellow)
+                        
+                        Text("Streak Point")
+                            .font(.caption)
+                            .foregroundColor(AppColors.mediumGreen)
+                    } else {
+                        Text("No Streak Point")
+                            .font(.caption)
+                            .foregroundColor(Color.gray)
+                    }
+                }
             }
         }
         .padding()
@@ -341,8 +389,9 @@ struct GymVisitCard: View {
     }
     
     var formattedDuration: String {
-        let hours = visit.duration / 60
-        let minutes = visit.duration % 60
+        let totalMinutes = Int(session.duration / 60)
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
         
         if hours > 0 {
             return "\(hours)h \(minutes)m"
@@ -598,6 +647,7 @@ struct PricingOptionButton: View {
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
+            .environmentObject(AuthService())
             .background(AppColors.background.ignoresSafeArea())
     }
 }

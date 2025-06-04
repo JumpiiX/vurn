@@ -1,413 +1,123 @@
 import SwiftUI
 
 struct LaunchView: View {
-    @State private var flameBricks: [FlameBrick] = []
-    @State private var isFlameBuilt = false
-    @State private var flameIgnited = false
+    @State private var showWhiteFlame = false
+    @State private var showYellowCheck = false
+    @State private var showGreenLeaf = false
+    @State private var topTextOpacity: Double = 0
+    @State private var bottomTextOpacity: Double = 0
     @State private var backgroundOpacity: Double = 0
-    @State private var textOpacity: Double = 0
-    @State private var showCheckmark = false
-    @State private var sparkles: [SparkleEffect] = []
-    @State private var fireParticles: [FireParticle] = []
     
     var onAnimationComplete: () -> Void
     
     var body: some View {
         ZStack {
-            // Epic background with multiple gradients
-            ZStack {
-                // Base dark background
-                AppColors.darkGreen.darker(by: 0.3)
-                    .ignoresSafeArea()
-                
-                // Animated radial gradient
-                RadialGradient(
-                    gradient: Gradient(colors: [
-                        AppColors.darkGreen.opacity(backgroundOpacity * 0.8),
-                        AppColors.darkGreen.darker().opacity(backgroundOpacity),
-                        Color.black.opacity(backgroundOpacity * 0.5)
-                    ]),
-                    center: .center,
-                    startRadius: 50,
-                    endRadius: 500
-                )
+            // Background
+            AppColors.darkGreen
                 .ignoresSafeArea()
-                .animation(.easeInOut(duration: 2.0), value: backgroundOpacity)
-                
-                // Fire glow effect when flame ignites
-                if flameIgnited {
-                    RadialGradient(
-                        gradient: Gradient(colors: [
-                            AppColors.accentYellow.opacity(0.4),
-                            Color.orange.opacity(0.2),
-                            Color.clear
-                        ]),
-                        center: .center,
-                        startRadius: 50,
-                        endRadius: 300
-                    )
-                    .ignoresSafeArea()
-                    .animation(.easeInOut(duration: 1.0), value: flameIgnited)
-                }
-            }
+                .opacity(backgroundOpacity)
+                .animation(.easeInOut(duration: 0.5), value: backgroundOpacity)
             
-            VStack(spacing: 40) {
-                // Epic Flame Building Animation
-                ZStack {
-                    // Build flame brick by brick
-                    ForEach(flameBricks.indices, id: \.self) { index in
-                        flameBricks[index].view
-                            .opacity(flameBricks[index].isVisible ? 1 : 0)
-                            .scaleEffect(flameBricks[index].isVisible ? 1 : 0.3)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(flameBricks[index].delay), value: flameBricks[index].isVisible)
-                    }
-                    
-                    // Fire effect overlay when ignited
-                    if flameIgnited {
-                        FlameFireEffect()
-                            .opacity(flameIgnited ? 1 : 0)
-                            .animation(.easeInOut(duration: 0.8), value: flameIgnited)
-                    }
-                    
-                    // Checkmark appears after flame ignites
-                    if showCheckmark {
-                        CheckmarkEffect()
-                            .opacity(showCheckmark ? 1 : 0)
-                            .scaleEffect(showCheckmark ? 1 : 0.3)
-                            .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.5), value: showCheckmark)
-                    }
-                    
-                    // Epic sparkle explosions
-                    ForEach(sparkles.indices, id: \.self) { index in
-                        sparkles[index].view
-                            .opacity(sparkles[index].isVisible ? 1 : 0)
-                            .animation(.easeInOut(duration: sparkles[index].duration).delay(sparkles[index].delay), value: sparkles[index].isVisible)
-                    }
-                    
-                    // Fire particles shooting upward
-                    ForEach(fireParticles.indices, id: \.self) { index in
-                        fireParticles[index].view
-                            .opacity(fireParticles[index].isVisible ? 1 : 0)
-                            .offset(y: fireParticles[index].offsetY)
-                            .animation(.easeInOut(duration: fireParticles[index].duration).delay(fireParticles[index].delay), value: fireParticles[index].isVisible)
-                    }
-                }
-                .frame(width: 140, height: 140)
+            VStack {
+                // Top text "VURN"
+                Text("VURN")
+                    .font(.system(size: 48, weight: .black, design: .rounded))
+                    .foregroundColor(AppColors.lightGreen)
+                    .opacity(topTextOpacity)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.7), value: topTextOpacity)
                 
-                // Epic "Vurn" text appears when flame ignites
-                VStack(spacing: 16) {
-                    // Main title with massive fire effect
-                    ZStack {
-                        // Multiple fire glow layers behind text
-                        if flameIgnited {
-                            ForEach(0..<3, id: \.self) { layer in
-                                Text("VURN")
-                                    .font(.system(size: 72, weight: .black, design: .rounded))
-                                    .foregroundColor(AppColors.accentYellow.opacity(0.8 - Double(layer) * 0.2))
-                                    .blur(radius: CGFloat(12 + layer * 8))
-                                    .scaleEffect(1.0 + CGFloat(layer) * 0.1)
-                            }
-                        }
+                Spacer()
+                
+                // Center logo animation
+                ZStack {
+                    // EPIC Logo build animation using PNG images
+                    Group {
+                        // 1. WHITE FLAME (Biggest piece) - dramatic entrance
+                        Image("flame-white")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 200, height: 200)
+                            .opacity(showWhiteFlame ? 1 : 0)
+                            .scaleEffect(showWhiteFlame ? 1 : 0.1)
+                            .rotationEffect(.degrees(showWhiteFlame ? 0 : 45))
+                            .animation(.spring(response: 1.0, dampingFraction: 0.6), value: showWhiteFlame)
                         
-                        // Main text - MASSIVE and BOLD
-                        Text("VURN")
-                            .font(.system(size: 72, weight: .black, design: .rounded))
-                            .foregroundColor(AppColors.lightGreen)
-                            .shadow(color: AppColors.accentYellow.opacity(0.5), radius: 4, x: 0, y: 2)
+                        // 2. YELLOW CHECKMARK (Medium piece) - slides in from right
+                        Image("checkmark-yellow")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 200, height: 200)
+                            .opacity(showYellowCheck ? 1 : 0)
+                            .scaleEffect(showYellowCheck ? 1 : 0.2)
+                            .offset(x: showYellowCheck ? 0 : 100)
+                            .animation(.spring(response: 0.8, dampingFraction: 0.7), value: showYellowCheck)
+                        
+                        // 3. GREEN LEAF (Smallest piece) - pops in with bounce
+                        Image("leaf-green")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 200, height: 200)
+                            .opacity(showGreenLeaf ? 1 : 0)
+                            .scaleEffect(showGreenLeaf ? 1 : 0)
+                            .animation(.spring(response: 0.6, dampingFraction: 0.5), value: showGreenLeaf)
                     }
-                    .opacity(textOpacity)
-                    .scaleEffect(textOpacity > 0 ? 1 : 0.5)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7), value: textOpacity)
-                    
-                    // Epic tagline
-                    Text("IGNITE YOUR FITNESS")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundColor(AppColors.accentYellow)
-                        .opacity(textOpacity)
-                        .scaleEffect(textOpacity > 0 ? 1 : 0.8)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: textOpacity)
                 }
+                .frame(height: 200)
+                
+                Spacer()
+                
+                // Bottom text "LET IT BURN"
+                Text("LET IT BURN")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(AppColors.accentYellow)
+                    .opacity(bottomTextOpacity)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.7), value: bottomTextOpacity)
             }
+            .padding(.vertical, 80)
         }
         .onAppear {
-            startEpicAnimation()
+            startLogoAnimation()
         }
     }
     
-    private func startEpicAnimation() {
-        // Phase 1: Background emerges (0-1s)
-        withAnimation(.easeInOut(duration: 1.0)) {
+    private func startLogoAnimation() {
+        // Phase 1: Background (0.2s)
+        withAnimation(.easeInOut(duration: 0.5)) {
             backgroundOpacity = 1.0
         }
         
-        // Phase 2: Build flame brick by brick (1-3s)
-        createFlameBricks()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            buildFlameAnimation()
+        // Phase 2: White flame shape comes in (0.5s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showWhiteFlame = true
         }
         
-        // Phase 3: Ignite the flame (3s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            igniteFlame()
+        // Phase 3: Yellow checkmark slides in (1.2s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            showYellowCheck = true
         }
         
-        // Phase 4: Show checkmark (3.5s)
+        // Phase 4: Green leaf appears (1.8s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            showGreenLeaf = true
+        }
+        
+        
+        // Phase 6: Show top text "VURN" first (2.5s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            topTextOpacity = 1.0
+        }
+        
+        // Phase 7: Show bottom text "LET IT BURN" later (3.5s)
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-            showCheckmark = true
+            bottomTextOpacity = 1.0
         }
         
-        // Phase 5: Massive sparkle explosion (3.8s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.8) {
-            createSparkleExplosion()
-        }
-        
-        // Phase 6: "Vurn" text appears when flame ignites (3.2s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) {
-            textOpacity = 1.0
-        }
-        
-        // Phase 7: Complete and transition (6s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
-            withAnimation(.easeInOut(duration: 0.8)) {
-                onAnimationComplete()
-            }
+        // Phase 8: Complete animation (4.5s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
+            onAnimationComplete()
         }
     }
     
-    private func createFlameBricks() {
-        // Create flame shape using individual "bricks"
-        let flamePositions: [(CGFloat, CGFloat)] = [
-            // Bottom row (base)
-            (-15, 40), (0, 40), (15, 40),
-            // Second row
-            (-10, 25), (0, 25), (10, 25),
-            // Third row (wider)
-            (-20, 10), (-5, 10), (5, 10), (20, 10),
-            // Fourth row
-            (-15, -5), (0, -5), (15, -5),
-            // Top flames (organic shape)
-            (-25, -20), (-10, -25), (0, -30), (10, -25), (25, -20),
-            (-20, -35), (-5, -40), (5, -40), (20, -35),
-            (-10, -50), (0, -55), (10, -50)
-        ]
-        
-        flameBricks = flamePositions.enumerated().map { index, position in
-            FlameBrick(
-                id: index,
-                position: CGPoint(x: position.0, y: position.1),
-                delay: Double(index) * 0.08,
-                isVisible: false
-            )
-        }
-    }
-    
-    private func buildFlameAnimation() {
-        // Animate each brick appearing
-        for i in 0..<flameBricks.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + flameBricks[i].delay) {
-                flameBricks[i].isVisible = true
-            }
-        }
-    }
-    
-    private func igniteFlame() {
-        withAnimation(.easeInOut(duration: 0.8)) {
-            flameIgnited = true
-        }
-        
-        // Create fire particles
-        createFireParticles()
-    }
-    
-    private func createFireParticles() {
-        fireParticles = (0..<20).map { index in
-            FireParticle(
-                id: index,
-                startPosition: CGPoint(
-                    x: CGFloat.random(in: -30...30),
-                    y: CGFloat.random(in: -20...20)
-                ),
-                delay: Double(index) * 0.1,
-                isVisible: false,
-                offsetY: -100
-            )
-        }
-        
-        // Animate particles
-        for i in 0..<fireParticles.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + fireParticles[i].delay) {
-                fireParticles[i].isVisible = true
-            }
-        }
-    }
-    
-    private func createSparkleExplosion() {
-        sparkles = (0..<24).map { index in
-            let angle = Double(index) * (2 * .pi / 24)
-            let radius = CGFloat.random(in: 60...120)
-            return SparkleEffect(
-                id: index,
-                position: CGPoint(
-                    x: cos(angle) * radius,
-                    y: sin(angle) * radius
-                ),
-                delay: Double(index) * 0.05,
-                duration: 1.5,
-                isVisible: false
-            )
-        }
-        
-        // Trigger sparkle explosion
-        for i in 0..<sparkles.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + sparkles[i].delay) {
-                sparkles[i].isVisible = true
-            }
-        }
-    }
-}
-
-// Data structures for epic effects
-struct FlameBrick {
-    let id: Int
-    let position: CGPoint
-    let delay: Double
-    var isVisible: Bool
-    
-    var view: some View {
-        RoundedRectangle(cornerRadius: 2)
-            .fill(LinearGradient(
-                gradient: Gradient(colors: [
-                    AppColors.lightGreen,
-                    AppColors.mediumGreen
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            ))
-            .frame(width: 8, height: 12)
-            .offset(x: position.x, y: position.y)
-    }
-}
-
-struct SparkleEffect {
-    let id: Int
-    let position: CGPoint
-    let delay: Double
-    let duration: Double
-    var isVisible: Bool
-    
-    var view: some View {
-        ZStack {
-            // Star burst effect
-            ForEach(0..<8, id: \.self) { ray in
-                Rectangle()
-                    .fill(AppColors.accentYellow)
-                    .frame(width: 2, height: CGFloat.random(in: 15...25))
-                    .rotationEffect(.degrees(Double(ray) * 45))
-            }
-            
-            // Center glow
-            Circle()
-                .fill(AppColors.accentYellow)
-                .frame(width: 6, height: 6)
-                .blur(radius: 2)
-        }
-        .offset(x: position.x, y: position.y)
-        .scaleEffect(isVisible ? 1.0 : 0.3)
-    }
-}
-
-struct FireParticle {
-    let id: Int
-    let startPosition: CGPoint
-    let delay: Double
-    let duration: Double = 2.0
-    var isVisible: Bool
-    var offsetY: CGFloat
-    
-    var view: some View {
-        Circle()
-            .fill(RadialGradient(
-                gradient: Gradient(colors: [
-                    AppColors.accentYellow,
-                    Color.orange,
-                    Color.red.opacity(0.8)
-                ]),
-                center: .center,
-                startRadius: 1,
-                endRadius: 4
-            ))
-            .frame(width: CGFloat.random(in: 4...8))
-            .offset(x: startPosition.x, y: startPosition.y)
-            .blur(radius: 1)
-    }
-}
-
-// Flame fire effect overlay
-struct FlameFireEffect: View {
-    @State private var flicker = false
-    
-    var body: some View {
-        ZStack {
-            // Multiple fire layers for realistic effect
-            ForEach(0..<6, id: \.self) { layer in
-                Ellipse()
-                    .fill(RadialGradient(
-                        gradient: Gradient(colors: [
-                            AppColors.accentYellow.opacity(0.8),
-                            Color.orange.opacity(0.6),
-                            Color.red.opacity(0.4),
-                            Color.clear
-                        ]),
-                        center: .center,
-                        startRadius: 5,
-                        endRadius: 40
-                    ))
-                    .frame(width: 60 + CGFloat(layer * 5), height: 80 + CGFloat(layer * 8))
-                    .scaleEffect(flicker ? 1.1 : 0.9)
-                    .animation(.easeInOut(duration: 0.3).repeatForever(autoreverses: true).delay(Double(layer) * 0.1), value: flicker)
-            }
-        }
-        .onAppear {
-            flicker = true
-        }
-    }
-}
-
-// Checkmark effect
-struct CheckmarkEffect: View {
-    @State private var drawCheckmark = false
-    
-    var body: some View {
-        ZStack {
-            // Glow behind checkmark
-            Circle()
-                .fill(AppColors.accentYellow.opacity(0.3))
-                .frame(width: 50, height: 50)
-                .blur(radius: 8)
-            
-            // Checkmark path
-            Path { path in
-                path.move(to: CGPoint(x: 10, y: 20))
-                path.addLine(to: CGPoint(x: 18, y: 28))
-                path.addLine(to: CGPoint(x: 30, y: 12))
-            }
-            .trim(from: 0, to: drawCheckmark ? 1.0 : 0)
-            .stroke(AppColors.accentYellow, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-            .frame(width: 40, height: 40)
-            .animation(.easeInOut(duration: 0.8), value: drawCheckmark)
-            .onAppear {
-                drawCheckmark = true
-            }
-        }
-        .offset(x: 25, y: 25) // Position like original logo
-    }
-}
-
-// Extension to create darker color
-extension Color {
-    func darker(by percentage: CGFloat = 0.2) -> Color {
-        return self.opacity(1.0 - percentage)
-    }
 }
 
 #Preview {
